@@ -12,8 +12,8 @@ DataViewer 是一款面向 iPhone / iPad 的原生时序数据查看与分析应
 
 ## 环境要求
 
-- macOS + Xcode（支持 iOS 26.5 SDK）
-- 运行目标：**iPhone / iPad**（iOS 26.5+）
+- macOS + Xcode（iOS 17 SDK 或更高）
+- 运行目标：**iPhone / iPad**（iOS 17.0+）
 
 ## 快速开始
 

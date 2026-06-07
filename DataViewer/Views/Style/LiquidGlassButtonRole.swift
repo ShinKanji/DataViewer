@@ -10,7 +10,7 @@ struct LiquidGlassButtonRoleModifier: ViewModifier {
 
     @ViewBuilder
     func body(content: Content) -> some View {
-        if LiquidGlassStyleResolver.supportsLiquidGlass {
+        if #available(iOS 26.0, *) {
             switch LiquidGlassStyleResolver.resolvedButtonStyle(for: role) {
             case .glassProminent:
                 content.buttonStyle(.glassProminent)
@@ -72,7 +72,7 @@ struct LiquidGlassButtonGroup<Content: View>: View {
     @ViewBuilder var content: () -> Content
 
     var body: some View {
-        if LiquidGlassStyleResolver.supportsLiquidGlass {
+        if #available(iOS 26.0, *) {
             GlassEffectContainer(spacing: spacing) {
                 content()
             }

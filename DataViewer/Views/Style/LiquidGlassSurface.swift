@@ -83,7 +83,7 @@ extension View {
     func liquidGlassToolbarBackground() -> some View {
         background {
             Group {
-                if LiquidGlassStyleResolver.supportsLiquidGlass {
+                if #available(iOS 26.0, *) {
                     Rectangle()
                         .fill(.clear)
                         .glassEffect(.regular, in: Rectangle())
@@ -120,7 +120,7 @@ private struct LiquidGlassFloatingPanelModifier: ViewModifier {
 
     @ViewBuilder
     private func glassOrMaterialFill<S: Shape>(in shape: S) -> some View {
-        if LiquidGlassStyleResolver.supportsLiquidGlass {
+        if #available(iOS 26.0, *) {
             shape
                 .fill(.clear)
                 .glassEffect(.regular, in: shape)
