@@ -1,0 +1,11 @@
+testdata/
+.DS_Store
+**/.DS_Store
+
+# Xcode user-specific data
+*.xcuserstate
+xcuserdata/
+**/xcuserdata/
+.codegraph/
+.reasonix/
+reasonix.toml
