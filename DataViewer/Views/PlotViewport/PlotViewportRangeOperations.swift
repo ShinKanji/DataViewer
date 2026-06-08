@@ -60,6 +60,44 @@ nonisolated enum PlotViewportRangeOperations {
 
         return VisibleTimeRange(start: newStart, end: newEnd)
     }
+
+    static func normalizedEndpointEdit(
+        editingStart: Bool,
+        input: Double,
+        currentStart: Double,
+        currentEnd: Double
+    ) -> (start: Double, end: Double, swapped: Bool) {
+        if editingStart {
+            if input > currentEnd {
+                return (currentEnd, input, true)
+            }
+            return (input, currentEnd, false)
+        }
+        if input < currentStart {
+            return (input, currentStart, true)
+        }
+        return (currentStart, input, false)
+    }
+
+    static func clampedVisibleRange(
+        start: Double,
+        end: Double,
+        full: VisibleTimeRange,
+        minimumLength: Double = 0.1
+    ) -> VisibleTimeRange {
+        var clampedStart = min(max(start, full.start), full.end)
+        var clampedEnd = min(max(end, full.start), full.end)
+        if clampedStart > clampedEnd {
+            swap(&clampedStart, &clampedEnd)
+        }
+        if clampedEnd - clampedStart < minimumLength {
+            clampedEnd = min(full.end, clampedStart + minimumLength)
+            if clampedEnd - clampedStart < minimumLength {
+                clampedStart = max(full.start, clampedEnd - minimumLength)
+            }
+        }
+        return VisibleTimeRange(start: clampedStart, end: clampedEnd)
+    }
 }
 
 nonisolated func plotViewportTime(atX x: CGFloat, width: CGFloat, range: VisibleTimeRange) -> Double {

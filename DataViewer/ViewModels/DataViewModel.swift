@@ -22,6 +22,12 @@ struct JumpPointRemovalResult: Equatable {
     var skippedUnavailable: [UUID]
 }
 
+struct HeadingUnwrapResult: Equatable {
+    var processedCount: Int
+    var skippedDerived: [UUID]
+    var skippedUnavailable: [UUID]
+}
+
 @MainActor
 @Observable
 final class DataViewModel {
@@ -166,11 +172,14 @@ final class DataViewModel {
         selectedChannelIDs.compactMap { catalogByID[$0] }
     }
 
-    var plottedChannelChipItems: [(id: UUID, title: String)] {
-        orderedNonEmptyPlotGroups.flatMap { group in
-            group.channelIDs.compactMap { channelID in
-                catalogByID[channelID].map { (channelID, friendlyName(for: $0)) }
-            }
+    var plottedGroupChipItems: [(id: UUID, group: PlotGroup, title: String, subtitle: String?)] {
+        orderedNonEmptyPlotGroups.map { group in
+            (
+                id: group.id,
+                group: group,
+                title: plotGroupTitle(for: group),
+                subtitle: plotGroupSubtitle(for: group)
+            )
         }
     }
 
@@ -392,6 +401,63 @@ final class DataViewModel {
 
     func jumpRemovalTargetChannels() -> [ChannelDescriptor] {
         jumpRemovalTargetChannelIDs().compactMap { catalogByID[$0] }
+    }
+
+    var hasSelectedHeadingAngleChannels: Bool {
+        !selectedHeadingAngleChannelIDs().isEmpty
+    }
+
+    func selectedHeadingAngleChannelIDs() -> [UUID] {
+        selectedChannelIDs.filter { channelID in
+            guard derivedRecords[channelID] == nil,
+                  let descriptor = catalogByID[channelID] else {
+                return false
+            }
+            return ChannelColumnNaming.isHeadingAngleColumn(descriptor.columnName)
+        }
+    }
+
+    func selectedHeadingAngleChannels() -> [ChannelDescriptor] {
+        selectedHeadingAngleChannelIDs().compactMap { catalogByID[$0] }
+    }
+
+    func unwrapHeadingAngleInSelectedChannels() async -> HeadingUnwrapResult {
+        let targetIDs = selectedHeadingAngleChannelIDs()
+        var result = HeadingUnwrapResult(
+            processedCount: 0,
+            skippedDerived: [],
+            skippedUnavailable: []
+        )
+
+        result.skippedDerived = selectedChannelIDs.filter { derivedRecords[$0] != nil }
+
+        var modifiedAny = false
+        for channelID in targetIDs {
+            guard let series = await ensureRawSeriesLoaded(channelID) else {
+                result.skippedUnavailable.append(channelID)
+                continue
+            }
+
+            let unwrapped = SignalTransform.unwrapHeadingAngle(values: series.values)
+            loadedSeries[channelID] = DataSeries(
+                id: series.id,
+                descriptor: series.descriptor,
+                times: series.times,
+                values: unwrapped
+            )
+            derivedSeriesCache.removeValue(forKey: channelID)
+            invalidateDerivedCache(forParentID: channelID)
+            result.processedCount += 1
+            modifiedAny = true
+        }
+
+        if modifiedAny {
+            invalidatePlotSampleCache()
+            refreshPlotSamplesNow()
+            scheduleStatisticsRefresh()
+        }
+
+        return result
     }
 
     func removeJumpPointsFromSelectedChannels(
@@ -958,14 +1024,6 @@ final class DataViewModel {
         }
     }
 
-    func togglePlottedChannelSelection(_ channelID: UUID) {
-        if selectedPlottedIDs.contains(channelID) {
-            selectedPlottedIDs.remove(channelID)
-        } else {
-            selectedPlottedIDs.insert(channelID)
-        }
-    }
-
     func undoLastChannelMutation() {
         guard let toast = channelActionToast else { return }
         toastDismissTask?.cancel()
@@ -1516,30 +1574,43 @@ final class DataViewModel {
 
     private func updateStatisticsABIntervalBoundary(isStart: Bool, time: Double) {
         guard let markerA = statisticsMarkerA, let markerB = statisticsMarkerB else { return }
-        let rounded = time.rounded()
-        if isStart {
-            let endSeconds = max(markerA, markerB)
-            let clampedStart = min(
-                max(clampStatisticsTime(rounded), statisticsFullRange.start),
-                endSeconds - 0.1
-            )
-            if markerA <= markerB {
-                updateStatisticsMarkerA(clampedStart)
+        let rounded = clampStatisticsTime(time.rounded())
+        let currentStart = min(markerA, markerB)
+        let currentEnd = max(markerA, markerB)
+        let edit = PlotViewportRangeOperations.normalizedEndpointEdit(
+            editingStart: isStart,
+            input: rounded,
+            currentStart: currentStart,
+            currentEnd: currentEnd
+        )
+        let range = PlotViewportRangeOperations.clampedVisibleRange(
+            start: edit.start,
+            end: edit.end,
+            full: statisticsFullRange
+        )
+        let startMarkerIsA = markerA <= markerB
+
+        if edit.swapped {
+            if startMarkerIsA {
+                statisticsMarkerA = range.end
+                statisticsMarkerB = range.start
             } else {
-                updateStatisticsMarkerB(clampedStart)
+                statisticsMarkerA = range.start
+                statisticsMarkerB = range.end
             }
+        } else if isStart {
+            if startMarkerIsA {
+                statisticsMarkerA = range.start
+            } else {
+                statisticsMarkerB = range.start
+            }
+        } else if startMarkerIsA {
+            statisticsMarkerB = range.end
         } else {
-            let startSeconds = min(markerA, markerB)
-            let clampedEnd = max(
-                min(clampStatisticsTime(rounded), statisticsFullRange.end),
-                startSeconds + 0.1
-            )
-            if markerA <= markerB {
-                updateStatisticsMarkerB(clampedEnd)
-            } else {
-                updateStatisticsMarkerA(clampedEnd)
-            }
+            statisticsMarkerA = range.end
         }
+
+        scheduleStatisticsRefresh()
     }
 
     private func performFullPreviewRefresh(generation: UInt) async {

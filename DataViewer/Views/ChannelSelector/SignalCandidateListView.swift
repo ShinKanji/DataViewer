@@ -114,7 +114,7 @@ struct SignalCandidateListView: View {
                 }
                 .tint(.accentColor)
             }
-            .accessibilityAction(named: String(localized: "添加到曲线", comment: "Add to plot accessibility action")) {
+            .accessibilityAction(named: String(localized: "添加", comment: "Add to plot accessibility action")) {
                 if viewModel.addCandidatesToPlot([channel.id]) {
                     lastAddTrigger += 1
                 }

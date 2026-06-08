@@ -14,6 +14,10 @@ nonisolated enum ChannelColumnNaming {
         return trimmed == "时间"
     }
 
+    static func isHeadingAngleColumn(_ name: String) -> Bool {
+        name.contains("航向角") || name.contains("航迹角")
+    }
+
     static func isExcludedFromCandidateList(_ name: String) -> Bool {
         classificationCacheLock.lock()
         if let cached = excludedFromCandidateCache[name] {

@@ -72,7 +72,7 @@ struct ContentView: View {
             }
 
             NavigationStack {
-                SignalComputeSheet(viewModel: viewModel, presentation: .embedded)
+                SignalComputeSheet(viewModel: viewModel)
                     .navigationTitle(String(localized: "计算", comment: "Compute tab title"))
                     .navigationBarTitleDisplayMode(.inline)
             }

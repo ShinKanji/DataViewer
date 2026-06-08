@@ -166,6 +166,33 @@ nonisolated enum SignalTransform {
         return (cleaned, thresholdUsed, removedCount)
     }
 
+    static func unwrapHeadingAngle(values: [Double], period: Double = 360) -> [Double] {
+        guard !values.isEmpty else { return [] }
+        var result = values
+        var lastFiniteIndex: Int?
+
+        for index in values.indices {
+            guard values[index].isFinite else {
+                result[index] = .nan
+                continue
+            }
+            guard let previousIndex = lastFiniteIndex else {
+                result[index] = values[index]
+                lastFiniteIndex = index
+                continue
+            }
+            let delta = shortestAngularDelta(
+                from: values[previousIndex],
+                to: values[index],
+                period: period
+            )
+            result[index] = result[previousIndex] + delta
+            lastFiniteIndex = index
+        }
+
+        return result
+    }
+
     static func apply(
         op: DerivedOpKind,
         times: [Double],
@@ -181,6 +208,17 @@ nonisolated enum SignalTransform {
             guard let window = windowSamples, window >= 1 else { return [] }
             return movingAverage(values: values, windowSamples: window)
         }
+    }
+
+    private static func shortestAngularDelta(from: Double, to: Double, period: Double) -> Double {
+        let halfPeriod = period / 2
+        var delta = (to - from).truncatingRemainder(dividingBy: period)
+        if delta > halfPeriod {
+            delta -= period
+        } else if delta <= -halfPeriod {
+            delta += period
+        }
+        return delta
     }
 
     private static func consecutiveAbsoluteDifferences(_ values: [Double]) -> [Double] {

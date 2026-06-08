@@ -9,7 +9,7 @@ struct SignalSelectedListView: View {
                 title: String(localized: "已选信号", comment: "Selected signals section header")
             )
 
-            if viewModel.plottedChannelChipItems.isEmpty {
+            if viewModel.orderedNonEmptyPlotGroups.isEmpty {
                 emptySelectedHint
             } else {
                 chipStrip
@@ -23,12 +23,14 @@ struct SignalSelectedListView: View {
     private var chipStrip: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
-                ForEach(viewModel.plottedChannelChipItems, id: \.id) { item in
-                    PlottedChannelChip(
+                ForEach(viewModel.plottedGroupChipItems, id: \.id) { item in
+                    PlottedGroupChip(
                         title: item.title,
-                        isSelected: viewModel.selectedPlottedIDs.contains(item.id),
-                        onToggleSelection: { viewModel.togglePlottedChannelSelection(item.id) },
-                        onRemove: { viewModel.removePlottedChannel(item.id) }
+                        accessibilityValue: item.subtitle
+                            ?? String(localized: "单信号", comment: "Single signal accessibility value"),
+                        isSelected: viewModel.isPlotGroupFullySelected(item.group),
+                        onToggleSelection: { viewModel.togglePlotGroupSelection(item.group) },
+                        onRemove: { viewModel.removePlotGroup(item.group.id) }
                     )
                 }
             }
@@ -49,8 +51,9 @@ struct SignalSelectedListView: View {
     }
 }
 
-private struct PlottedChannelChip: View {
+private struct PlottedGroupChip: View {
     let title: String
+    let accessibilityValue: String
     let isSelected: Bool
     var onToggleSelection: () -> Void
     var onRemove: () -> Void
@@ -99,6 +102,7 @@ private struct PlottedChannelChip: View {
             }
         }
         .accessibilityLabel(title)
+        .accessibilityValue(accessibilityValue)
         .accessibilityHint(String(localized: "点按选择以分组；长按更多操作", comment: "Chip accessibility hint"))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }

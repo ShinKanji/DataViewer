@@ -38,7 +38,7 @@ struct SplitDetailWorkspaceView: View {
                               systemImage: "chart.bar.doc.horizontal")
                     }
 
-                SignalComputeSheet(viewModel: viewModel, presentation: .embedded)
+                SignalComputeSheet(viewModel: viewModel)
                     .tag(SplitDetailTab.compute)
                     .tabItem {
                         Label(String(localized: "计算", comment: "Compute tab item label"),

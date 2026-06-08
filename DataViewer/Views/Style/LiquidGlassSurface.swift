@@ -60,6 +60,24 @@ extension View {
     }
 }
 
+struct LiquidGlassProminentShapeBackground<S: InsettableShape>: View {
+    let shape: S
+
+    var body: some View {
+        if #available(iOS 26.0, *), LiquidGlassStyleResolver.supportsLiquidGlass {
+            shape
+                .fill(.clear)
+                .glassEffect(.regular.tint(Color.accentColor), in: shape)
+        } else {
+            shape
+                .fill(Color.accentColor)
+                .overlay {
+                    shape.strokeBorder(Color.primary.opacity(0.12), lineWidth: 0.5)
+                }
+        }
+    }
+}
+
 extension View {
     @ViewBuilder
     func contentAnnotationBackground<S: InsettableShape>(_ shape: S) -> some View {

@@ -23,7 +23,7 @@ struct CandidateSelectionBottomBar: View {
 
             Spacer()
 
-            Button(String(localized: "添加到曲线", comment: "Add selected candidates to plot button"), action: onAdd)
+            Button(String(localized: "添加", comment: "Add selected candidates to plot button"), action: onAdd)
                 .glassControl(.primary)
                 .disabled(selectionCount == 0)
                 .accessibilityIdentifier("addSelectedCandidatesButton")

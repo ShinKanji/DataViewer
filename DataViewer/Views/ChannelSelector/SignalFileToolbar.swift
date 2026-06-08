@@ -28,18 +28,28 @@ private struct ImportFileRow: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: Constants.controlSpacing) {
-            Button(String(localized: "导入数据…", comment: "Import data button"), systemImage: "folder") {
-                viewModel.requestImportData()
-            }
-            .glassControl(.primary)
-            .accessibilityIdentifier("importDataButton")
+            importButton
+                .fixedSize(horizontal: true, vertical: false)
+                .layoutPriority(1)
 
             if let url = viewModel.dataFileURL {
                 MarqueeText(text: url.lastPathComponent)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                    .layoutPriority(-1)
                     .accessibilityIdentifier("importedFileNamesMarquee")
+            } else {
+                Spacer(minLength: 0)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var importButton: some View {
+        Button(String(localized: "导入文件", comment: "Import file button"), systemImage: "folder") {
+            viewModel.requestImportData()
+        }
+        .glassControl(.primary)
+        .accessibilityIdentifier("importDataButton")
     }
 }
 

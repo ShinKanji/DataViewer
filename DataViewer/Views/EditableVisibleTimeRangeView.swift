@@ -50,6 +50,15 @@ struct EditableVisibleTimeRangeView: View {
         .controlSize(.small)
         .onChange(of: start) { _, _ in cancelEditing() }
         .onChange(of: end) { _, _ in cancelEditing() }
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                timeRangeEditingDoneButton(
+                    for: editingEndpoint,
+                    accessibilityID: "editableTimeRangeKeyboardDoneButton"
+                )
+            }
+        }
     }
 
     @ViewBuilder
@@ -77,12 +86,25 @@ struct EditableVisibleTimeRangeView: View {
             }
             if editingEndpoint == endpoint {
                 Text("s")
+                timeRangeEditingDoneButton(for: endpoint, accessibilityID: "\(accessibilityID)Done")
             }
         }
         .onChange(of: focusedEndpoint) { _, newValue in
             guard editingEndpoint == endpoint, newValue != endpoint else { return }
             commitEditing(endpoint)
         }
+    }
+
+    @ViewBuilder
+    private func timeRangeEditingDoneButton(for endpoint: Endpoint?, accessibilityID: String) -> some View {
+        Button(String(localized: "完成", comment: "Done editing time field button")) {
+            if let endpoint {
+                commitEditing(endpoint)
+            }
+        }
+        .glassControl(.inline, size: .compact)
+        .disabled(endpoint == nil)
+        .accessibilityIdentifier(accessibilityID)
     }
 
     private func beginEditing(_ endpoint: Endpoint, seconds: Double) {
