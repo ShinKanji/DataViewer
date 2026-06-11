@@ -15,6 +15,7 @@ struct PlotGroupChartView: View {
 
     var body: some View {
         let yDomain = yDomainOverride ?? yRange(for: samples)
+        let chartShape = RoundedRectangle(cornerRadius: Constants.chartCornerRadius, style: .continuous)
 
         Chart(samples) { sample in
             LineMark(
@@ -28,6 +29,11 @@ struct PlotGroupChartView: View {
         .chartYScale(domain: yDomain)
         .chartForegroundStyleScale(range: ChartColorPalette.colors)
         .chartLegend(position: .bottom, alignment: .leading)
+        .frame(minHeight: minHeight)
+        .background {
+            chartShape.fill(LiquidGlassStyleResolver.platformChartBackground())
+        }
+        .clipShape(chartShape)
         .chartOverlay { proxy in
             PlotLinkedCursorChartOverlay(
                 proxy: proxy,
@@ -38,8 +44,6 @@ struct PlotGroupChartView: View {
                 onCursorEnd: onChartSelectionEnd
             )
         }
-        .frame(minHeight: minHeight)
-        .contentSurface(.chartContainer)
     }
 
     private func yRange(for samples: [PlotSample]) -> ClosedRange<Double> {
@@ -51,6 +55,12 @@ struct PlotGroupChartView: View {
 }
 
 private struct PlotLinkedCursorChartOverlay: View {
+    private static let labelHorizontalOffset: CGFloat = 10
+    private static let labelVerticalOffset: CGFloat = 14
+    private static let labelEdgePadding: CGFloat = 4
+    private static let labelEstimatedHeight: CGFloat = 20
+    private static let labelEstimatedWidth: CGFloat = 56
+
     let proxy: ChartProxy
     let cursorTime: Double?
     let readings: [ChartSelectionSample]
@@ -74,6 +84,11 @@ private struct PlotLinkedCursorChartOverlay: View {
                     ForEach(readings) { reading in
                         if let yPos = proxy.position(forY: reading.scaledValue) {
                             let color = ChartColorPalette.color(at: reading.colorIndex)
+                            let labelOffset = labelOffset(
+                                xPos: xPos,
+                                yPos: yPos,
+                                plotFrame: plotFrame
+                            )
                             ZStack {
                                 Circle()
                                     .fill(color)
@@ -85,7 +100,7 @@ private struct PlotLinkedCursorChartOverlay: View {
                                     .contentAnnotationBackground(
                                         RoundedRectangle(cornerRadius: Constants.smallCornerRadius, style: .continuous)
                                     )
-                                    .offset(x: 10, y: -14)
+                                    .offset(x: labelOffset.width, y: labelOffset.height)
                             }
                             .position(x: xPos, y: yPos)
                         }
@@ -113,6 +128,18 @@ private struct PlotLinkedCursorChartOverlay: View {
         guard plotFrame.contains(location),
               let time = proxy.value(atX: location.x, as: Double.self) else { return }
         onCursorMove?(time)
+    }
+
+    private func labelOffset(xPos: CGFloat, yPos: CGFloat, plotFrame: CGRect) -> CGSize {
+        let placeBelow = yPos - Self.labelVerticalOffset - Self.labelEstimatedHeight
+            < plotFrame.minY + Self.labelEdgePadding
+        let verticalOffset = placeBelow ? Self.labelVerticalOffset : -Self.labelVerticalOffset
+
+        let placeLeft = xPos + Self.labelHorizontalOffset + Self.labelEstimatedWidth
+            > plotFrame.maxX - Self.labelEdgePadding
+        let horizontalOffset = placeLeft ? -Self.labelHorizontalOffset : Self.labelHorizontalOffset
+
+        return CGSize(width: horizontalOffset, height: verticalOffset)
     }
 
     private func formatValue(_ value: Double) -> String {

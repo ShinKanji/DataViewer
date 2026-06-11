@@ -11,6 +11,9 @@ struct PlotGroupChartContainer: View {
         let title = viewModel.plotGroupTitle(for: group)
         let showsHeader = viewModel.plotGroupShowsChartHeader(for: group)
 
+        let hasActiveCursorReadings = viewModel.chartSelectionTime != nil
+            && !viewModel.chartSelectionReadings(for: group).isEmpty
+
         VStack(alignment: .leading, spacing: 8) {
             if showsHeader {
                 Text(title)
@@ -27,6 +30,7 @@ struct PlotGroupChartContainer: View {
                 onChartSelectionEnd: { viewModel.clearChartSelection() }
             )
         }
+        .zIndex(hasActiveCursorReadings ? 1 : 0)
         .accessibilityElement(children: .contain)
         .accessibilityLabel(title)
         .accessibilityValue(String(localized: "\(group.channelIDs.count) 条曲线", comment: "Chart series count accessibility value"))
