@@ -40,6 +40,7 @@ private struct ChannelCandidateDropDestinationModifier: ViewModifier {
                 .contentShape(Rectangle())
                 .dropDestination(for: ChannelDragPayload.self, action: handleDrop, isTargeted: handleTargeted)
                 .overlay { dropTargetHighlight }
+                .sensoryFeedback(.impact(weight: .light), trigger: isDropTargeted) { $1 && !$0 }
         case .overlayAboveContent:
             // List 会拦截拖放，需在内容上方加透明接收层。
             content
@@ -51,6 +52,7 @@ private struct ChannelCandidateDropDestinationModifier: ViewModifier {
                     )
                 }
                 .overlay { dropTargetHighlight }
+                .sensoryFeedback(.impact(weight: .light), trigger: isDropTargeted) { $1 && !$0 }
         }
     }
 
@@ -61,9 +63,6 @@ private struct ChannelCandidateDropDestinationModifier: ViewModifier {
 
     private func handleTargeted(_ targeted: Bool) {
         isDropTargeted = targeted
-        if targeted {
-            PlotChannelsDropFeedback.dropTargetChanged(to: true)
-        }
     }
 
     @ViewBuilder

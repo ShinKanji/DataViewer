@@ -28,10 +28,3 @@ struct ChannelActionToastView: View {
         }
     }
 }
-
-enum PlotChannelsDropFeedback {
-    static func dropTargetChanged(to targeted: Bool) {
-        guard targeted else { return }
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-    }
-}

@@ -108,16 +108,19 @@ private struct PlotLinkedCursorChartOverlay: View {
                 }
 
                 if isInteractionEnabled, onCursorMove != nil {
-                    CursorInteractionGestureView(
-                        onChanged: { location in
-                            handleLocation(location, plotFrame: plotFrame)
-                        },
-                        onEnded: {
-                            onCursorEnd?()
-                        }
-                    )
-                    .frame(width: plotFrame.width, height: plotFrame.height)
-                    .position(x: plotFrame.midX, y: plotFrame.midY)
+                    Color.clear
+                        .frame(width: plotFrame.width, height: plotFrame.height)
+                        .position(x: plotFrame.midX, y: plotFrame.midY)
+                        .contentShape(Rectangle())
+                        .simultaneousGesture(
+                            DragGesture(minimumDistance: 0)
+                                .onChanged { value in
+                                    handleLocation(value.location, plotFrame: plotFrame)
+                                }
+                                .onEnded { _ in
+                                    onCursorEnd?()
+                                }
+                        )
                 }
             }
             }

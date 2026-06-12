@@ -2,7 +2,6 @@ import SwiftUI
 
 struct SignalFileToolbar: View {
     @Bindable var viewModel: DataViewModel
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var lastAnnouncedPhaseLabel: String?
 
     var body: some View {
@@ -14,8 +13,7 @@ struct SignalFileToolbar: View {
 
             LoadingProgressRow(
                 viewModel: viewModel,
-                lastAnnouncedPhaseLabel: $lastAnnouncedPhaseLabel,
-                reduceMotion: reduceMotion
+                lastAnnouncedPhaseLabel: $lastAnnouncedPhaseLabel
             )
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -56,7 +54,6 @@ private struct ImportFileRow: View {
 private struct LoadingProgressRow: View {
     @Bindable var viewModel: DataViewModel
     @Binding var lastAnnouncedPhaseLabel: String?
-    var reduceMotion: Bool
 
     var body: some View {
         if viewModel.loadingProgress != nil || viewModel.isLoading {
@@ -78,12 +75,10 @@ private struct LoadingProgressRow: View {
             .accessibilityLabel(String(localized: "数据加载", comment: "Data loading accessibility label"))
             .accessibilityValue(viewModel.loadingProgress.map { loadingAccessibilityValue(for: $0) } ?? "")
             .accessibilityIdentifier("loadingProgressStatus")
+            .accessibilityAddTraits(.updatesFrequently)
             .onChange(of: viewModel.loadingProgress?.phaseLabel) { _, newValue in
                 guard let newValue, newValue != lastAnnouncedPhaseLabel else { return }
                 lastAnnouncedPhaseLabel = newValue
-                if !reduceMotion {
-                    UIAccessibility.post(notification: .announcement, argument: newValue)
-                }
             }
         }
     }
