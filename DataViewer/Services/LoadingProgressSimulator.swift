@@ -13,7 +13,7 @@ final class LoadingProgressSimulator {
     private var sessionStartTime: Date?
     private var totalEstimatedDuration: TimeInterval = 0
     private var tickTask: Task<Void, Never>?
-    private var reduceMotion = false
+    private var isReduceMotionEnabled = false
     private(set) var state: LoadingProgressState?
 
     var onStateChange: ((LoadingProgressState) -> Void)?
@@ -53,13 +53,13 @@ final class LoadingProgressSimulator {
         return min(prior + current, fractionCap)
     }
 
-    func begin(phases: [LoadingPhase], reduceMotion: Bool? = nil) {
+    func begin(phases: [LoadingPhase], isReduceMotionEnabled: Bool? = nil) {
         cancelTickTask()
         self.phases = phases
         self.currentPhaseIndex = -1
         self.totalEstimatedDuration = ImportDurationEstimator.totalEstimatedDuration(for: phases)
         self.sessionStartTime = Date()
-        self.reduceMotion = reduceMotion ?? Self.systemPrefersReducedMotion
+        self.isReduceMotionEnabled = isReduceMotionEnabled ?? Self.systemPrefersReducedMotion
         let initialLabel = phases.first?.label ?? ImportDurationEstimator.importingFileLabel
         publishState(label: initialLabel, fraction: 0)
         startSessionTickTask()
@@ -70,7 +70,7 @@ final class LoadingProgressSimulator {
         currentPhaseIndex = index
         let label = labelOverride ?? phases[index].label
         let fraction: Double
-        if reduceMotion {
+        if isReduceMotionEnabled {
             fraction = max(
                 state?.fraction ?? 0,
                 Self.weightedFraction(phases: phases, phaseIndex: index, inPhaseProgress: 0)
@@ -85,7 +85,7 @@ final class LoadingProgressSimulator {
         guard index >= 0, index < phases.count else { return }
         let weighted = Self.weightedFraction(phases: phases, phaseIndex: index, inPhaseProgress: 1)
         let fraction: Double
-        if reduceMotion {
+        if isReduceMotionEnabled {
             fraction = weighted
         } else {
             fraction = max(state?.fraction ?? 0, simulatedFraction(), weighted)

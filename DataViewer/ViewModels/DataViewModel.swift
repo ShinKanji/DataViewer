@@ -431,7 +431,7 @@ final class DataViewModel {
 
         result.skippedDerived = selectedChannelIDs.filter { derivedRecords[$0] != nil }
 
-        var modifiedAny = false
+        var isAnyModified = false
         for channelID in targetIDs {
             guard let series = await ensureRawSeriesLoaded(channelID) else {
                 result.skippedUnavailable.append(channelID)
@@ -448,10 +448,10 @@ final class DataViewModel {
             derivedSeriesCache.removeValue(forKey: channelID)
             invalidateDerivedCache(forParentID: channelID)
             result.processedCount += 1
-            modifiedAny = true
+            isAnyModified = true
         }
 
-        if modifiedAny {
+        if isAnyModified {
             invalidatePlotSampleCache()
             refreshPlotSamplesNow()
             scheduleStatisticsRefresh()
@@ -474,7 +474,7 @@ final class DataViewModel {
         let skippedDerived = selectedChannelIDs.filter { derivedRecords[$0] != nil }
         result.skippedDerived = skippedDerived
 
-        var modifiedAny = false
+        var isAnyModified = false
         for channelID in targetIDs {
             guard let series = await ensureRawSeriesLoaded(channelID) else {
                 result.skippedUnavailable.append(channelID)
@@ -504,10 +504,10 @@ final class DataViewModel {
             invalidateDerivedCache(forParentID: channelID)
             result.processedCount += 1
             result.removedTotal += removal.removedCount
-            modifiedAny = true
+            isAnyModified = true
         }
 
-        if modifiedAny {
+        if isAnyModified {
             invalidatePlotSampleCache()
             refreshPlotSamplesNow()
             scheduleStatisticsRefresh()
@@ -718,9 +718,9 @@ final class DataViewModel {
     }
 
     private func pruneDerivedRecords() {
-        var changed = true
-        while changed {
-            changed = false
+        var hasChanged = true
+        while hasChanged {
+            hasChanged = false
             for (id, record) in derivedRecords {
                 let parentAvailable = catalogByID[record.parentID] != nil
                 if !parentAvailable {
@@ -729,7 +729,7 @@ final class DataViewModel {
                     channelValueScales.removeValue(forKey: id)
                     candidateChannels.removeAll { $0.id == id }
                     catalogByID.removeValue(forKey: id)
-                    changed = true
+                    hasChanged = true
                 }
             }
         }

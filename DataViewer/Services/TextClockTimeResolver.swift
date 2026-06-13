@@ -62,7 +62,7 @@ nonisolated enum TextClockTimeResolver {
         defer { try? handle.close() }
 
         var buffer = Data()
-        var headerConsumed = false
+        var isHeaderConsumed = false
         var times: [Double] = []
         var hours: [Double] = []
         var minutes: [Double] = []
@@ -85,8 +85,8 @@ nonisolated enum TextClockTimeResolver {
                 }
                 guard let line = decodeLine(lineData) else { continue }
 
-                if !headerConsumed {
-                    headerConsumed = true
+                if !isHeaderConsumed {
+                    isHeaderConsumed = true
                     continue
                 }
 

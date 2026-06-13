@@ -48,7 +48,7 @@ nonisolated enum TabularTextParser {
         defer { try? handle.close() }
 
         var buffer = Data()
-        var headerConsumed = false
+        var isHeaderConsumed = false
         var parsedLines = 0
 
         while parsedLines < limit {
@@ -63,8 +63,8 @@ nonisolated enum TabularTextParser {
                     buffer.removeFirst()
                 }
                 guard let line = decodeLine(lineData), !line.isEmpty else { continue }
-                if !headerConsumed {
-                    headerConsumed = true
+                if !isHeaderConsumed {
+                    isHeaderConsumed = true
                     continue
                 }
                 _ = splitColumns(line)
@@ -299,7 +299,7 @@ nonisolated enum TabularTextParser {
         defer { try? handle.close() }
 
         var buffer = Data()
-        var headerConsumed = false
+        var isHeaderConsumed = false
         var headers: [String] = []
         var times: [Double] = []
         var rawLines: [String] = []
@@ -319,10 +319,10 @@ nonisolated enum TabularTextParser {
                 }
                 guard let line = decodeLine(lineData), !line.isEmpty else { continue }
 
-                if !headerConsumed {
+                if !isHeaderConsumed {
                     headers = splitColumns(line)
                     guard !headers.isEmpty else { throw ParseError.emptyFile }
-                    headerConsumed = true
+                    isHeaderConsumed = true
                     continue
                 }
 
@@ -333,7 +333,7 @@ nonisolated enum TabularTextParser {
             }
         }
 
-        guard headerConsumed else { throw ParseError.emptyFile }
+        guard isHeaderConsumed else { throw ParseError.emptyFile }
         return ParsedFile(headers: headers, times: times, rawLines: rawLines)
     }
 

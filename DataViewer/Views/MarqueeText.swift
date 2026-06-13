@@ -3,7 +3,7 @@ import SwiftUI
 struct MarqueeText: View {
     let text: String
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityReduceMotion) private var isReduceMotionEnabled
     @State private var textWidth: CGFloat = 0
 
     private let segmentSpacing: CGFloat = 32
@@ -12,7 +12,7 @@ struct MarqueeText: View {
     var body: some View {
         GeometryReader { proxy in
             let containerWidth = proxy.size.width
-            let shouldScroll = !reduceMotion
+            let shouldScroll = !isReduceMotionEnabled
                 && textWidth > containerWidth
                 && containerWidth > 0
 
